@@ -1,19 +1,44 @@
 const mysql = require('mysql2/promise');
+const { Client } = require('pg');
 
 module.exports = async function(req, res) {
   try {
-    // Vercel akan otomatis mengambil URL dari Environment Variables
+    const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+
+    // Deteksi jika menggunakan Neon Database / PostgreSQL
+    if (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')) {
+      const client = new Client({
+        connectionString: dbUrl,
+        ssl: { rejectUnauthorized: false }
+      });
+
+      await client.connect();
+      const result = await client.query('SELECT \'Koneksi ke Neon Database (PostgreSQL) Berhasil!\' AS pesan');
+      await client.end();
+
+      return res.status(200).json({ 
+        status: 'Sukses', 
+        provider: 'Neon Database (PostgreSQL)',
+        hasil: result.rows[0] 
+      });
+    }
+
+    // Default ke MySQL (Aiven atau MySQL lokal)
     const connection = await mysql.createConnection({
-      uri: process.env.DATABASE_URL,
-      ssl: { rejectUnauthorized: false } // Aiven mewajibkan SSL
+      uri: dbUrl,
+      ssl: { rejectUnauthorized: false }
     });
     
-    // Uji coba ambil data dari database Aiven
-    const [rows] = await connection.execute('SELECT "Koneksi ke Aiven Database Berhasil!" AS pesan');
+    const [rows] = await connection.execute('SELECT "Koneksi ke MySQL Database Berhasil!" AS pesan');
     await connection.end();
     
-    res.status(200).json({ status: 'Sukses', hasil: rows[0] });
+    return res.status(200).json({ 
+      status: 'Sukses', 
+      provider: 'MySQL Database',
+      hasil: rows[0] 
+    });
+
   } catch (error) {
-    res.status(500).json({ status: 'Error', pesan: error.message });
+    return res.status(500).json({ status: 'Error', pesan: error.message });
   }
 };
