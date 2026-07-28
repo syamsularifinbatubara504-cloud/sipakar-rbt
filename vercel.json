@@ -1,7 +1,15 @@
 {
   "version": 2,
-  "buildCommand": "cd rbt-frontend && npm install && npm run build",
+  "buildCommand": "cd rbt-frontend && npm install && npx ng build --configuration production",
   "outputDirectory": "rbt-frontend/dist/rbt-frontend/browser",
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ],
   "rewrites": [
     {
       "source": "/api/(.*)",
