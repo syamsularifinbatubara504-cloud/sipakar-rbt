@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "buildCommand": "cd rbt-frontend && npm install && npm run build",
+  "outputDirectory": "rbt-frontend/dist/rbt-frontend/browser",
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
