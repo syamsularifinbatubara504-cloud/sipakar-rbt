@@ -11,13 +11,14 @@ require('dotenv').config();
 
 // PENTING: trim() untuk menghapus trailing whitespace dari .env
 const GEMINI_API_KEY  = (process.env.GEMINI_API_KEY  || '').trim();
-const GEMINI_MODEL    = (process.env.GEMINI_MODEL    || 'gemini-3.5-flash').trim();
+const GEMINI_MODEL    = (process.env.GEMINI_MODEL    || 'gemini-2.5-flash').trim();
 
-// Urutan fallback model — semua terkonfirmasi ada di API v1beta
+// Urutan fallback model terkonfirmasi
 const FALLBACK_MODELS = [
-  'gemini-3.5-flash',
-  'gemini-3.1-flash-lite',
-  'gemini-flash-latest',
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash',
+  'gemini-1.5-pro',
 ];
 
 // Request options dengan API v1beta (default SDK)
