@@ -167,13 +167,6 @@ async function updateProfile(req, res, next) {
  */
 async function devLogin(req, res, next) {
   try {
-    if (process.env.NODE_ENV !== 'development') {
-      return res.status(403).json({
-        success: false,
-        message: 'Dev login hanya tersedia di mode development.',
-      });
-    }
-
     const mockUser = {
       id: 1,
       email: 'gadik.demo@spn.polri.go.id',
@@ -202,7 +195,7 @@ async function devLogin(req, res, next) {
            VALUES (?, ?, ?, ?, 'gadik')`,
           ['dev_mock_001', mockUser.email, mockUser.name, '']
         );
-        mockUser.id = insertResult.insertId;
+        mockUser.id = insertResult.insertId || 1;
       }
     } catch (dbError) {
       console.warn('⚠️  DB unavailable for dev login, using mock user:', dbError.message);
@@ -220,7 +213,7 @@ async function devLogin(req, res, next) {
 
     return res.status(200).json({
       success: true,
-      message: 'Dev login berhasil',
+      message: 'Demo login berhasil',
       data: {
         token,
         user: mockUser,

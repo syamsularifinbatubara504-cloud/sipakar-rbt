@@ -13,10 +13,12 @@ export class AuthService {
   private tokenSignal = signal<string | null>(null);
   private userSignal = signal<User | null>(null);
   private loadingSignal = signal<boolean>(false);
+  private loginErrorSignal = signal<string | null>(null);
 
   readonly token = this.tokenSignal.asReadonly();
   readonly user = this.userSignal.asReadonly();
   readonly loading = this.loadingSignal.asReadonly();
+  readonly loginError = this.loginErrorSignal.asReadonly();
   readonly isAuthenticated = computed(() => !!this.tokenSignal());
 
   private readonly API_URL = environment.apiUrl;
@@ -71,6 +73,7 @@ export class AuthService {
     }
 
     this.loadingSignal.set(true);
+    this.loginErrorSignal.set(null);
 
     try {
       const result = await this.http
@@ -83,14 +86,19 @@ export class AuthService {
         this.tokenSignal.set(result.data.token);
         this.userSignal.set(result.data.user);
 
-        // Store in sessionStorage (more secure than localStorage)
+        // Store in sessionStorage
         sessionStorage.setItem('rbt_token', result.data.token);
         sessionStorage.setItem('rbt_user', JSON.stringify(result.data.user));
 
         this.router.navigate(['/dashboard']);
+      } else {
+        const msg = result?.message || 'Login gagal: Respons server tidak valid.';
+        this.loginErrorSignal.set(msg);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      const msg = error?.error?.message || error?.message || 'Gagal terhubung ke server backend.';
+      this.loginErrorSignal.set(msg);
     } finally {
       this.loadingSignal.set(false);
     }

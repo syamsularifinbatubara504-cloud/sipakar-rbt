@@ -70,6 +70,9 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
           }
 
           <div class="google-btn-container" #googleBtn id="google-signin-btn"></div>
+          @if (auth.loginError()) {
+            <p class="dev-error" style="margin-bottom: 1rem;">{{ auth.loginError() }}</p>
+          }
 
           <!-- Dev Login Button (hanya untuk development/testing) -->
           <div class="dev-login-section">
