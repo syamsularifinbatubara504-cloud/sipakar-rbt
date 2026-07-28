@@ -54,4 +54,11 @@ Login (Google) → Input Narasi → Pasal.id (Hukum) → Gemini AI (Skenario) �
 - **Lantas** — Lalu Lintas
 - **Intelkam** — Intelijen Keamanan
 - **Administrasi** — Tata Kelola
+
+## Panduan Deployment
+
+- [Panduan Deploy ke Vercel & Neon DB](file:///c:/Users/kresnamukti/Documents/contoh%20saja/DEPLOY_VERCEL_NEON.md)
+- [Panduan Deploy ke Render & Aiven (Alternative)](file:///c:/Users/kresnamukti/Documents/contoh%20saja/DEPLOY_README.md)
+
 # E-PIKPOR
+
