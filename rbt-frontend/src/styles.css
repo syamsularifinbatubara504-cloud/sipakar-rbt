@@ -963,4 +963,14 @@ select.form-input:focus {
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
 }
 
+/* =========================================
+   Mobile Global Responsive Enhancements
+   ========================================= */
+@media (max-width: 768px) {
+  .page { padding: 1rem !important; }
+  .grid.cols-3, .grid.cols-4 { grid-template-columns: 1fr !important; }
+  .table-responsive, .table-wrap { width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+}
+
+
 

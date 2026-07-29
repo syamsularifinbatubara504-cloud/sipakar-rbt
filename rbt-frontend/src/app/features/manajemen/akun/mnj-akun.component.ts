@@ -527,6 +527,33 @@ import { environment } from '../../../../environments/environment';
     .toast-success { background: rgba(16,185,129,0.9); color: #fff; }
     .toast-error { background: rgba(239,68,68,0.9); color: #fff; }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 768px) {
+      .pagehead { flex-direction: column; align-items: stretch; gap: 1rem; }
+      .head-actions { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; }
+      .btn-action-add, .btn-action-batch { width: 100%; justify-content: center; text-align: center; }
+      .stats-row { grid-template-columns: 1fr; }
+      .table-wrap { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+      .data-table th, .data-table td { padding: 0.75rem 0.875rem; white-space: nowrap; }
+      .action-btn-group { flex-wrap: wrap; gap: 4px; }
+      .modal-card { width: 95%; margin: 0.5rem; max-height: 92vh; }
+      .form-grid { grid-template-columns: 1fr; }
+      .form-group.full-width { grid-column: span 1; }
+      .detail-grid { grid-template-columns: 1fr; }
+      .guide-header-row { flex-direction: column; align-items: stretch; }
+      .btn-download-template { width: 100%; text-align: center; }
+    }
+
+    @media (max-width: 480px) {
+      .modal-header { padding: 1rem; }
+      .modal-body { padding: 1rem; }
+      .modal-footer { padding: 0.875rem 1rem; flex-direction: column-reverse; width: 100%; }
+      .btn-secondary, .btn-save, .btn-edit-lg { width: 100%; text-align: center; justify-content: center; }
+      .detail-profile-header { flex-direction: column; text-align: center; }
+      .big-avatar { margin: 0 auto; }
+      .toast { left: 1rem; right: 1rem; bottom: 1rem; text-align: center; }
+    }
   `]
 })
 export class MnjAkunComponent implements OnInit {

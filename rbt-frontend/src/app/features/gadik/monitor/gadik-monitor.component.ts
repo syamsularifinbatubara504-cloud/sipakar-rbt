@@ -148,10 +148,24 @@ import { environment } from '../../../../environments/environment';
     .btn-cert { background: rgba(16,185,129,0.15); border-color: #10b981; color: #10b981; font-weight: 600; }
     .btn-cert:hover { background: #10b981; color: #fff; }
     .text-muted { color: var(--color-text-muted); }
-    .center-state { padding: 3rem; text-align: center; color: var(--color-text-secondary); }
     .toast { position: fixed; bottom: 2rem; right: 2rem; padding: 0.75rem 1.5rem; border-radius: 10px; font-size: 0.875rem; font-weight: 600; z-index: 1000; }
     .toast-success { background: rgba(16,185,129,0.9); color: #fff; }
     .toast-error { background: rgba(239,68,68,0.9); color: #fff; }
+
+    /* Mobile Responsive Adjustments */
+    @media (max-width: 768px) {
+      .stats-row { grid-template-columns: 1fr; gap: 0.75rem; }
+      .table-wrap { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; border-radius: 12px; }
+      .data-table th, .data-table td { padding: 0.75rem 0.875rem; white-space: nowrap; }
+      .syarat-box { min-width: 110px; }
+    }
+
+    @media (max-width: 480px) {
+      .stat-card { padding: 1rem; }
+      .stat-icon { width: 40px; height: 40px; font-size: 1.25rem; }
+      .stat-val { font-size: 1.25rem; }
+      .toast { left: 1rem; right: 1rem; bottom: 1rem; text-align: center; }
+    }
   `]
 })
 export class GadikMonitorComponent implements OnInit {
