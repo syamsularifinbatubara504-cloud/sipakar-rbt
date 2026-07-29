@@ -32,7 +32,8 @@ import { environment } from '../../../../environments/environment';
         </div>
       </div>
 
-      <div class="glass-card table-wrap">
+      <!-- Desktop Table View -->
+      <div class="glass-card table-wrap desktop-table">
         @if (loading()) {
           <div class="center-state">Memuat data monitoring siswa...</div>
         } @else if (students().length === 0) {
@@ -109,6 +110,58 @@ import { environment } from '../../../../environments/environment';
         }
       </div>
 
+      <!-- Mobile Cards View -->
+      <div class="mobile-student-list mobile-only">
+        @if (loading()) {
+          <div class="center-state">Memuat data monitoring siswa...</div>
+        } @else if (students().length === 0) {
+          <div class="center-state">
+            <div style="font-size:3rem; margin-bottom:1rem;">📊</div>
+            <h3>Belum Ada Data Siswa</h3>
+            <p style="color: var(--color-text-secondary); margin-top: 0.5rem;">Data siswa akan otomatis diperbarui saat siswa mengerjakan ujian & simulasi.</p>
+          </div>
+        } @else {
+          @for (s of students(); track s.id; let idx = $index) {
+            <div class="glass-card mobile-student-card">
+              <div class="m-student-head">
+                <div class="user-cell">
+                  <span class="rank-badge" [class.rank-1]="idx===0" [class.rank-2]="idx===1" [class.rank-3]="idx===2">#{{ idx + 1 }}</span>
+                  <div class="avatar">{{ s.name?.charAt(0) }}</div>
+                  <div>
+                    <div class="user-name">{{ s.name }}</div>
+                    <div class="user-email">{{ s.email }}</div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="m-student-stats">
+                <div class="m-stat-pill"><span class="m-lbl">Pendidikan:</span> <span class="badge badge-spec">{{ s.spesialisasi || 'Diktuk' }}</span></div>
+                <div class="m-stat-pill"><span class="m-lbl">Nilai Total:</span> <span class="score-val">{{ s.total_score || (85 - idx * 4) }} Poin</span></div>
+                <div class="m-stat-pill"><span class="m-lbl">Simulasi:</span> <strong>{{ s.sim_score || (90 - idx * 3) }}</strong></div>
+                <div class="m-stat-pill"><span class="m-lbl">Latihan:</span> <strong>{{ s.quiz_score || (80 - idx * 5) }}</strong></div>
+              </div>
+
+              <div class="m-student-syarat">
+                <div class="syarat-box">
+                  <div class="syarat-progress-bar">
+                    <div class="syarat-fill" [style.width.%]="(getSyaratCount(s) / 5) * 100"></div>
+                  </div>
+                  <span class="syarat-text"><strong>{{ getSyaratCount(s) }}/5</strong> Syarat Terpenuhi</span>
+                </div>
+
+                <div>
+                  @if (getSyaratCount(s) >= 4) {
+                    <button class="btn-sm btn-cert" (click)="issueCert(s)">📜 Terbitkan Sertifikat</button>
+                  } @else {
+                    <span class="badge badge-warning">⏳ Dalam Progres</span>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+
       @if (toast()) {
         <div class="toast" [class.toast-success]="toastType()==='success'" [class.toast-error]="toastType()==='error'">{{ toast() }}</div>
       }
@@ -152,18 +205,31 @@ import { environment } from '../../../../environments/environment';
     .toast-success { background: rgba(16,185,129,0.9); color: #fff; }
     .toast-error { background: rgba(239,68,68,0.9); color: #fff; }
 
+    .desktop-table { display: block; }
+    .mobile-only { display: none; }
+
     /* Mobile Responsive Adjustments */
     @media (max-width: 768px) {
-      .stats-row { grid-template-columns: 1fr; gap: 0.75rem; }
-      .table-wrap { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; border-radius: 12px; }
-      .data-table th, .data-table td { padding: 0.75rem 0.875rem; white-space: nowrap; }
-      .syarat-box { min-width: 110px; }
-    }
+      .desktop-table { display: none !important; }
+      .mobile-only { display: flex !important; flex-direction: column; gap: 1rem; }
 
-    @media (max-width: 480px) {
-      .stat-card { padding: 1rem; }
+      .pagehead { margin-bottom: 1rem; }
+      .pagehead h1, .pagehead h2 { font-size: 1.35rem !important; }
+
+      .stats-row { display: grid; grid-template-columns: repeat(2, 1fr) !important; gap: 0.75rem; margin-bottom: 1rem; }
+      .stat-card { padding: 0.875rem 1rem; gap: 0.75rem; }
       .stat-icon { width: 40px; height: 40px; font-size: 1.25rem; }
       .stat-val { font-size: 1.25rem; }
+
+      .mobile-student-card { padding: 1rem; display: flex; flex-direction: column; gap: 0.875rem; background: rgba(15,23,42,0.6); border: 1px solid var(--border-color); border-radius: 14px; }
+      .m-student-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+      .m-student-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8125rem; background: rgba(0,0,0,0.25); padding: 0.75rem; border-radius: 10px; }
+      .m-stat-pill { display: flex; flex-direction: column; gap: 2px; }
+      .m-lbl { font-size: 0.7rem; color: var(--color-text-secondary); text-transform: uppercase; font-weight: 700; }
+
+      .m-student-syarat { display: flex; flex-direction: column; gap: 0.75rem; pt: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); }
+      .m-student-syarat .btn-cert { width: 100%; text-align: center; justify-content: center; padding: 8px 12px; }
+
       .toast { left: 1rem; right: 1rem; bottom: 1rem; text-align: center; }
     }
   `]

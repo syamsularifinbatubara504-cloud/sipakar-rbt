@@ -52,8 +52,8 @@ import { environment } from '../../../../environments/environment';
                [(ngModel)]="searchTerm" class="search-input" />
       </div>
 
-      <!-- Table -->
-      <div class="glass-card table-wrap">
+      <!-- Desktop Table View -->
+      <div class="glass-card table-wrap desktop-table">
         @if (loading()) {
           <div class="loading-state">Memuat data pengguna...</div>
         } @else if (filteredUsers().length === 0) {
@@ -110,6 +110,44 @@ import { environment } from '../../../../environments/environment';
               }
             </tbody>
           </table>
+        }
+      </div>
+
+      <!-- Mobile Cards View -->
+      <div class="mobile-user-list mobile-only">
+        @if (loading()) {
+          <div class="loading-state">Memuat data pengguna...</div>
+        } @else if (filteredUsers().length === 0) {
+          <div class="empty-state">Tidak ada pengguna ditemukan.</div>
+        } @else {
+          @for (u of filteredUsers(); track u.id) {
+            <div class="glass-card mobile-user-card">
+              <div class="m-user-head">
+                <div class="user-cell">
+                  <div class="avatar">{{ u.name?.charAt(0) || '?' }}</div>
+                  <div>
+                    <div class="user-name-text">{{ u.name }}</div>
+                    <div class="email-text">{{ u.email }}</div>
+                  </div>
+                </div>
+                <select class="role-select" [ngModel]="u.role" (ngModelChange)="changeRole(u, $event)">
+                  <option value="gadik">Gadik</option>
+                  <option value="siswa">Siswa</option>
+                  <option value="manajemen">Manajemen</option>
+                </select>
+              </div>
+              <div class="m-user-body">
+                <div class="m-info-item"><span class="m-lbl">Pendidikan:</span> <span class="badge badge-spec">{{ u.spesialisasi || '-' }}</span></div>
+                <div class="m-info-item"><span class="m-lbl">NRP / NIP:</span> <span class="nrp-text">{{ u.nrp || '-' }}</span></div>
+                <div class="m-info-item" style="grid-column: span 2;"><span class="m-lbl">Jabatan:</span> <span class="jabatan-text">{{ u.jabatan || '-' }}</span></div>
+              </div>
+              <div class="m-user-actions">
+                <button class="btn-action btn-view" (click)="openViewModal(u)">👁️ Detail</button>
+                <button class="btn-action btn-edit" (click)="openEditModal(u)">✏️ Edit</button>
+                <button class="btn-icon btn-danger" (click)="deleteUser(u)" title="Hapus pengguna">🗑️ Hapus</button>
+              </div>
+            </div>
+          }
         }
       </div>
 
@@ -528,19 +566,36 @@ import { environment } from '../../../../environments/environment';
     .toast-error { background: rgba(239,68,68,0.9); color: #fff; }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
+    .desktop-table { display: block; }
+    .mobile-only { display: none; }
+
     /* Mobile Responsive Adjustments */
     @media (max-width: 768px) {
-      .pagehead { flex-direction: column; align-items: stretch; gap: 1rem; }
+      .desktop-table { display: none !important; }
+      .mobile-only { display: flex !important; flex-direction: column; gap: 1rem; }
+
+      .pagehead { flex-direction: column; align-items: stretch; gap: 0.75rem; margin-bottom: 1rem; }
+      .pagehead h1, .pagehead h2 { font-size: 1.35rem !important; }
       .head-actions { width: 100%; display: flex; flex-direction: column; gap: 0.5rem; }
       .btn-action-add, .btn-action-batch { width: 100%; justify-content: center; text-align: center; }
-      .stats-row { grid-template-columns: 1fr; }
-      .table-wrap { overflow-x: auto; width: 100%; -webkit-overflow-scrolling: touch; border-radius: 12px; }
-      .data-table th, .data-table td { padding: 0.75rem 0.875rem; white-space: nowrap; }
+
+      .stats-row { display: grid; grid-template-columns: repeat(2, 1fr) !important; gap: 0.75rem; }
+      .stat-card { padding: 0.875rem 1rem; gap: 0.75rem; }
+      .stat-icon { width: 40px; height: 40px; font-size: 1.25rem; }
+      .stat-val { font-size: 1.25rem; }
+
+      .mobile-user-card { padding: 1rem; display: flex; flex-direction: column; gap: 0.875rem; background: rgba(15,23,42,0.6); border: 1px solid var(--border-color); border-radius: 14px; }
+      .m-user-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; }
+      .m-user-body { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.8125rem; background: rgba(0,0,0,0.25); padding: 0.75rem; border-radius: 10px; }
+      .m-info-item { display: flex; flex-direction: column; gap: 2px; }
+      .m-lbl { font-size: 0.7rem; color: var(--color-text-secondary); text-transform: uppercase; font-weight: 700; }
+      .m-user-actions { display: flex; align-items: center; gap: 0.5rem; justify-content: flex-end; pt: 0.5rem; border-top: 1px solid rgba(255,255,255,0.05); }
+      .m-user-actions .btn-action { flex: 1; text-align: center; justify-content: center; padding: 8px 12px; }
+
       .action-btn-group { flex-wrap: wrap; gap: 4px; }
       .modal-card { width: 95%; margin: 0.5rem; max-height: 92vh; }
-      .form-grid { grid-template-columns: 1fr; }
-      .form-group.full-width { grid-column: span 1; }
-      .detail-grid { grid-template-columns: 1fr; }
+      .form-grid, .detail-grid { grid-template-columns: 1fr !important; }
+      .form-group.full-width { grid-column: span 1 !important; }
       .guide-header-row { flex-direction: column; align-items: stretch; }
       .btn-download-template { width: 100%; text-align: center; }
     }
