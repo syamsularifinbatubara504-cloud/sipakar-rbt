@@ -44,9 +44,19 @@ app.use(cors({
 // Request logging
 app.use(morgan('dev'));
 
+const path = require('path');
+const fs = require('fs');
+
 // Body parser
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+// Ensure uploads folder exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+app.use('/uploads', express.static(uploadsDir));
 
 // Rate limiting
 const limiter = rateLimit({
@@ -73,11 +83,24 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+const usersRoutes = require('./routes/users.routes');
+const materialsRoutes = require('./routes/materials.routes');
+const assignmentsRoutes = require('./routes/assignments.routes');
+const questionsRoutes = require('./routes/questions.routes');
+const certificationsRoutes = require('./routes/certifications.routes');
+
 // Auth routes
 app.use('/api/auth', authRoutes);
 
 // Simulation routes
 app.use('/api/simulations', simulationRoutes);
+
+// New role-based feature routes
+app.use('/api/users', usersRoutes);
+app.use('/api/materials', materialsRoutes);
+app.use('/api/assignments', assignmentsRoutes);
+app.use('/api/questions', questionsRoutes);
+app.use('/api/certifications', certificationsRoutes);
 
 // ============================================
 // Error Handling

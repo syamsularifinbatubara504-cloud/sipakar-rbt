@@ -1,5 +1,5 @@
 export const environment = {
   production: false,
-  apiUrl: '/api',
+  apiUrl: 'http://localhost:3000/api', // URL untuk backend lokal
   googleClientId: '673992786221-eom0c8k7samudu3rtmuenlcdnh2gcank.apps.googleusercontent.com',
 };

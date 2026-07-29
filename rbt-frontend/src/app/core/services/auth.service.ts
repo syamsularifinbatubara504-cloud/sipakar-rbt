@@ -90,7 +90,13 @@ export class AuthService {
         sessionStorage.setItem('rbt_token', result.data.token);
         sessionStorage.setItem('rbt_user', JSON.stringify(result.data.user));
 
-        this.router.navigate(['/dashboard']);
+        if (result.data.user.role === 'siswa') {
+          this.router.navigate(['/siswa/dashboard']);
+        } else if (result.data.user.role === 'manajemen') {
+          this.router.navigate(['/mnj/dashboard']);
+        } else {
+          this.router.navigate(['/gadik/dashboard']);
+        }
       } else {
         const msg = result?.message || 'Login gagal: Respons server tidak valid.';
         this.loginErrorSignal.set(msg);
@@ -150,14 +156,14 @@ export class AuthService {
   }
 
   /**
-   * Dev-only login — bypass Google OAuth untuk testing lokal
-   * Memanggil POST /api/auth/dev-login di backend
+   * Local login — bypass Google OAuth menggunakan email dan password untuk predefined accounts
+   * Memanggil POST /api/auth/local-login di backend
    */
-  async devLogin(): Promise<void> {
+  async localLogin(email: string, password: string): Promise<void> {
     this.loadingSignal.set(true);
     try {
       const result = await this.http
-        .post<AuthResponse>(`${this.API_URL}/auth/dev-login`, {})
+        .post<AuthResponse>(`${this.API_URL}/auth/local-login`, { email, password })
         .toPromise();
 
       if (result && result.success) {
@@ -165,12 +171,19 @@ export class AuthService {
         this.userSignal.set(result.data.user);
         sessionStorage.setItem('rbt_token', result.data.token);
         sessionStorage.setItem('rbt_user', JSON.stringify(result.data.user));
-        this.router.navigate(['/dashboard']);
+        
+        if (result.data.user.role === 'siswa') {
+          this.router.navigate(['/siswa/dashboard']);
+        } else if (result.data.user.role === 'manajemen') {
+          this.router.navigate(['/mnj/dashboard']);
+        } else {
+          this.router.navigate(['/gadik/dashboard']);
+        }
       } else {
-        throw new Error('Dev login gagal: respons tidak valid dari server.');
+        throw new Error('Login lokal gagal: respons tidak valid dari server.');
       }
     } catch (error: any) {
-      const msg = error?.error?.message || error?.message || 'Dev login gagal.';
+      const msg = error?.error?.message || error?.message || 'Login lokal gagal.';
       throw new Error(msg);
     } finally {
       this.loadingSignal.set(false);

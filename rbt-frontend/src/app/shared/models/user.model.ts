@@ -3,7 +3,7 @@ export interface User {
   email: string;
   name: string;
   picture: string;
-  role: 'gadik' | 'admin' | 'peserta';
+  role: 'gadik' | 'siswa' | 'manajemen';
   spesialisasi: Spesialisasi | null;
 }
 

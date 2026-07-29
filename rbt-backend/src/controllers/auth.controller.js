@@ -161,62 +161,74 @@ async function updateProfile(req, res, next) {
 }
 
 /**
- * POST /api/auth/dev-login
- * Development-only mock login (tanpa Google OAuth)
- * HANYA aktif di NODE_ENV=development
+ * POST /api/auth/local-login
+ * Login menggunakan email & password lokal (untuk predefined accounts)
  */
-async function devLogin(req, res, next) {
+const bcrypt = require('bcrypt');
+
+async function localLogin(req, res, next) {
   try {
-    const mockUser = {
-      id: 1,
-      email: 'gadik.demo@spn.polri.go.id',
-      name: 'Gadik Demo SPN',
-      picture: '',
-      role: 'gadik',
-      spesialisasi: null,
-    };
+    const { email, password } = req.body;
 
-    // Try to create/find user in database, fall back to mock if DB is unavailable
-    try {
-      const [existingUsers] = await pool.execute(
-        'SELECT * FROM users WHERE email = ?',
-        [mockUser.email]
-      );
+    if (!email || !password) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email dan password diperlukan.',
+      });
+    }
 
-      if (existingUsers.length > 0) {
-        const dbUser = existingUsers[0];
-        mockUser.id = dbUser.id;
-        mockUser.name = dbUser.name;
-        mockUser.role = dbUser.role;
-        mockUser.spesialisasi = dbUser.spesialisasi;
-      } else {
-        const [insertResult] = await pool.execute(
-          `INSERT INTO users (google_id, email, name, picture_url, role)
-           VALUES (?, ?, ?, ?, 'gadik')`,
-          ['dev_mock_001', mockUser.email, mockUser.name, '']
-        );
-        mockUser.id = insertResult.insertId || 1;
-      }
-    } catch (dbError) {
-      console.warn('⚠️  DB unavailable for dev login, using mock user:', dbError.message);
+    const [users] = await pool.execute(
+      'SELECT * FROM users WHERE email = ?',
+      [email]
+    );
+
+    if (users.length === 0) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email atau password salah.',
+      });
+    }
+
+    const user = users[0];
+
+    if (!user.password) {
+      return res.status(401).json({
+        success: false,
+        message: 'Akun ini menggunakan Google Login.',
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({
+        success: false,
+        message: 'Email atau password salah.',
+      });
     }
 
     const jwtPayload = {
-      userId: mockUser.id,
-      email: mockUser.email,
-      name: mockUser.name,
-      role: mockUser.role,
-      spesialisasi: mockUser.spesialisasi,
+      userId: user.id,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      spesialisasi: user.spesialisasi,
     };
 
     const token = jwt.sign(jwtPayload, JWT_SECRET, { expiresIn: JWT_EXPIRES_IN });
 
     return res.status(200).json({
       success: true,
-      message: 'Demo login berhasil',
+      message: 'Login lokal berhasil',
       data: {
         token,
-        user: mockUser,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          picture: user.picture_url,
+          role: user.role,
+          spesialisasi: user.spesialisasi,
+        },
       },
     });
   } catch (error) {
@@ -224,4 +236,4 @@ async function devLogin(req, res, next) {
   }
 }
 
-module.exports = { googleLogin, getProfile, updateProfile, devLogin };
+module.exports = { googleLogin, getProfile, updateProfile, localLogin };

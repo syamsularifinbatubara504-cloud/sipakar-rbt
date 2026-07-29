@@ -11,12 +11,16 @@ const {
   getSimulationStats, 
   evaluateSimulation,
   getLegalReferences,
-  testPasalIntegration
+  testPasalIntegration,
+  getCertProgress
 } = require('../controllers/simulation.controller');
 const { authenticateToken } = require('../middleware/auth.middleware');
 
 // Semua route simulasi memerlukan autentikasi
 router.use(authenticateToken);
+
+// GET    /api/simulations/cert-progress - Progres real kelayakan sertifikasi siswa
+router.get('/cert-progress', getCertProgress);
 
 // POST   /api/simulations      - Buat simulasi baru (chain: Pasal.id -> Gemini -> MySQL)
 router.post('/', createSimulation);

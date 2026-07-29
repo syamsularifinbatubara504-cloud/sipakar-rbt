@@ -33,9 +33,9 @@ async function fetchFromPasalId(searchQuery) {
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => {
-      console.warn(`[PASAL] ⏳ Trigger timeout untuk Pasal.id API...`);
+      console.warn(`[PASAL] ⏳ Trigger timeout untuk Pasal.id API (3s limit)...`);
       controller.abort();
-    }, 10000); // Tingkatkan ke 10 detik
+    }, 3000);
 
     const response = await fetch(url, {
       method: 'GET',
@@ -219,15 +219,9 @@ async function searchLegalArticles(searchQuery, narasiKasus = '', categories = [
   let results = await fetchFromPasalId(searchQuery);
   if (results.length > 0) return results;
 
-  // Langkah 2: Coba Pasal.id REST API (Hanya Kategori Utama)
-  if (categories && categories.length > 0) {
-    console.log(`[PASAL] Coba cari berdasarkan kategori: ${categories[0]}`);
-    results = await fetchFromPasalId(categories[0]);
-    if (results.length > 0) return results;
-  }
-
-  // Langkah 3: Fallback ke Gemini AI (Identifikasi Ahli)
+  // Langkah 2: Fallback langsung ke Gemini AI (Super Cepat & Akurat)
   if (narasiKasus && narasiKasus.length >= 20) {
+    console.log('[PASAL] Memanggil Gemini AI fallback untuk ekstrak pasal hukum...');
     results = await generateLegalRefsWithGemini(narasiKasus);
     if (results.length > 0) return results;
   }

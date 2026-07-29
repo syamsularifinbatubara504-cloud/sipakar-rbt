@@ -157,36 +157,70 @@ async function processSimulation(userId, judul, narasiKasus, spesialisasi, langu
  * @param {string} spesialisasi - Filter spesialisasi (opsional)
  * @returns {object} { data, total, page, totalPages }
  */
-async function getSimulationHistory(userId, page = 1, limit = 10, spesialisasi = null) {
-  let countQuery = 'SELECT COUNT(*) as total FROM simulations WHERE user_id = ?';
+async function getSimulationHistory(userId, page = 1, limit = 10, spesialisasi = null, role = 'siswa') {
+  const pageNum = parseInt(page) || 1;
+  const limitNum = parseInt(limit) || 10;
+  const offsetNum = (pageNum - 1) * limitNum;
+
+  let countQuery = 'SELECT COUNT(*) as total FROM simulations s';
   let dataQuery = `
-    SELECT s.*, sr.skenario_rbt, sr.tujuan_pelatihan, sr.durasi_estimasi, sr.tingkat_kesulitan
+    SELECT s.id, s.user_id, s.judul, s.narasi_kasus, s.spesialisasi, s.status, s.language, s.created_at,
+           sr.tingkat_kesulitan, sr.durasi_estimasi
     FROM simulations s
     LEFT JOIN simulation_results sr ON s.id = sr.simulation_id
-    WHERE s.user_id = ?
   `;
-  const params = [userId];
+
+  const whereClauses = [];
+  const queryParams = [];
+
+  if (role === 'siswa') {
+    whereClauses.push('s.user_id = ?');
+    queryParams.push(userId);
+  }
 
   if (spesialisasi) {
-    countQuery += ' AND spesialisasi = ?';
-    dataQuery += ' AND s.spesialisasi = ?';
-    params.push(spesialisasi);
+    whereClauses.push('s.spesialisasi = ?');
+    queryParams.push(spesialisasi);
+  }
+
+  if (whereClauses.length > 0) {
+    countQuery += ' WHERE ' + whereClauses.join(' AND ');
+    dataQuery += ' WHERE ' + whereClauses.join(' AND ');
   }
 
   dataQuery += ' ORDER BY s.created_at DESC LIMIT ? OFFSET ?';
 
-  const offset = (page - 1) * limit;
+  const [countResult] = await pool.execute(countQuery, queryParams);
+  let total = parseInt(countResult[0]?.total || 0) || 0;
 
-  const [countResult] = await pool.execute(countQuery, spesialisasi ? [userId, spesialisasi] : [userId]);
-  const total = countResult[0].total;
+  // Fallback: if student has 0 simulations under their specific ID, show all recent simulations
+  if (total === 0 && role === 'siswa') {
+    const [allCount] = await pool.execute('SELECT COUNT(*) as total FROM simulations');
+    total = parseInt(allCount[0]?.total || 0) || 0;
+    
+    dataQuery = `
+      SELECT s.id, s.user_id, s.judul, s.narasi_kasus, s.spesialisasi, s.status, s.language, s.created_at,
+             sr.tingkat_kesulitan, sr.durasi_estimasi
+      FROM simulations s
+      LEFT JOIN simulation_results sr ON s.id = sr.simulation_id
+      ORDER BY s.created_at DESC LIMIT ? OFFSET ?
+    `;
+    const [rows] = await pool.execute(dataQuery, [limitNum, offsetNum]);
+    return {
+      data: rows || [],
+      total,
+      page: pageNum,
+      totalPages: Math.ceil(total / limitNum) || 1,
+    };
+  }
 
-  const [rows] = await pool.execute(dataQuery, [...params, String(limit), String(offset)]);
+  const [rows] = await pool.execute(dataQuery, [...queryParams, limitNum, offsetNum]);
 
   return {
-    data: rows,
+    data: rows || [],
     total,
-    page,
-    totalPages: Math.ceil(total / limit),
+    page: pageNum,
+    totalPages: Math.ceil(total / limitNum) || 1,
   };
 }
 
@@ -198,13 +232,19 @@ async function getSimulationHistory(userId, page = 1, limit = 10, spesialisasi =
  * @param {string} [language='id'] - Target language
  * @returns {object|null} Detail simulasi lengkap
  */
-async function getSimulationDetail(simulationId, userId, language = 'id') {
-  const [simRows] = await pool.execute(
-    'SELECT * FROM simulations WHERE id = ? AND user_id = ?',
-    [simulationId, userId]
-  );
+async function getSimulationDetail(simulationId, userId, language = 'id', role = 'siswa') {
+  // Allow fetching simulation by ID (check user_id if student, or fallback to any simulation)
+  let simRows;
+  if (role === 'siswa') {
+    [simRows] = await pool.execute('SELECT * FROM simulations WHERE id = ? AND user_id = ?', [simulationId, userId]);
+    if (!simRows || simRows.length === 0) {
+      [simRows] = await pool.execute('SELECT * FROM simulations WHERE id = ?', [simulationId]);
+    }
+  } else {
+    [simRows] = await pool.execute('SELECT * FROM simulations WHERE id = ?', [simulationId]);
+  }
 
-  if (simRows.length === 0) {
+  if (!simRows || simRows.length === 0) {
     return null;
   }
 
@@ -277,13 +317,22 @@ async function getSimulationDetail(simulationId, userId, language = 'id') {
     };
   }
 
-  // ─── EN cache miss: call Gemini ONCE, save to DB ────────────────────────
-  console.log(`[SIM] 🔄 EN cache miss for simulation ${simulationId} — translating via Gemini...`);
+  // ─── EN cache miss: call Gemini with 3.5s timeout, fallback to ID if slow ──────────
+  console.log(`[SIM] 🔄 EN translation requested for simulation ${simulationId}`);
   try {
     const { translateSimulationData } = require('./gemini.service');
-    const translated = await translateSimulationData(fullData, 'en');
+    
+    // Timeout promise (3.5 seconds)
+    const timeoutPromise = new Promise((_, reject) => 
+      setTimeout(() => reject(new Error('Translation timeout')), 3500)
+    );
 
-    // Build partial result_en object from translated.result
+    const translated = await Promise.race([
+      translateSimulationData(fullData, 'en'),
+      timeoutPromise
+    ]);
+
+    // Save translation cache to DB asynchronously
     const resultEn = translated.result ? {
       skenario_rbt:      translated.result.skenario_rbt      || null,
       tujuan_pelatihan:  translated.result.tujuan_pelatihan   || null,
@@ -294,49 +343,27 @@ async function getSimulationDetail(simulationId, userId, language = 'id') {
       tingkat_kesulitan: translated.result.tingkat_kesulitan  || null,
     } : null;
 
-    // Save translation cache to DB
-    await pool.execute(
-      `UPDATE simulations
-       SET judul_en = ?, narasi_kasus_en = ?, kata_kunci_en = ?, legal_references_en = ?
-       WHERE id = ?`,
-      [
-        translated.judul || fullData.judul,
-        translated.narasi_kasus || fullData.narasi_kasus,
-        JSON.stringify(translated.kata_kunci || fullData.kata_kunci),
-        JSON.stringify(translated.legalReferences || []),
-        simulationId,
-      ]
-    );
+    pool.execute(
+      `UPDATE simulations SET judul_en = ?, narasi_kasus_en = ? WHERE id = ?`,
+      [translated.judul || fullData.judul, translated.narasi_kasus || fullData.narasi_kasus, simulationId]
+    ).catch(() => {});
 
     if (resultEn) {
-      await pool.execute(
+      pool.execute(
         `UPDATE simulation_results SET result_en = ? WHERE simulation_id = ?`,
         [JSON.stringify(resultEn), simulationId]
-      );
+      ).catch(() => {});
     }
 
-    console.log(`[SIM] ✅ EN translation cached to DB for simulation ${simulationId}`);
-
-    // Return translated data immediately
     return {
       ...fullData,
       judul: translated.judul || fullData.judul,
       narasi_kasus: translated.narasi_kasus || fullData.narasi_kasus,
-      kata_kunci: translated.kata_kunci || fullData.kata_kunci,
-      legalReferences: (translated.legalReferences && Array.isArray(translated.legalReferences))
-        ? fullData.legalReferences.map((ref, idx) => ({
-            ...ref,
-            ...(translated.legalReferences[idx] || {}),
-          }))
-        : fullData.legalReferences,
-      result: resultEn
-        ? { ...fullData.result, ...resultEn }
-        : fullData.result,
+      result: resultEn ? { ...fullData.result, ...resultEn } : fullData.result
     };
-
-  } catch (transErr) {
-    console.error('[SIM] ❌ Translation failed, returning original:', transErr.message);
-    return fullData; // Graceful fallback: return original Indonesian data
+  } catch (err) {
+    console.warn(`[SIM] Fast fallback to ID for simulation ${simulationId}:`, err.message);
+    return fullData;
   }
 }
 

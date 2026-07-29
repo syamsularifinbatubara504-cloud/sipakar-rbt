@@ -26,9 +26,10 @@ if (isPostgres) {
           await pgPool.query(`
             CREATE TABLE IF NOT EXISTS users (
               id SERIAL PRIMARY KEY,
-              google_id VARCHAR(255) UNIQUE NOT NULL,
+              google_id VARCHAR(255) UNIQUE NULL,
               email VARCHAR(255) UNIQUE NOT NULL,
               name VARCHAR(255) NOT NULL,
+              password VARCHAR(255) NULL,
               picture_url TEXT,
               role VARCHAR(50) DEFAULT 'gadik',
               spesialisasi VARCHAR(50) NULL,
@@ -91,6 +92,123 @@ if (isPostgres) {
             );
           `);
 
+          await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS materials (
+              id SERIAL PRIMARY KEY,
+              gadik_id INT NOT NULL,
+              judul VARCHAR(500) NOT NULL,
+              unit_spesialisasi VARCHAR(50) NOT NULL,
+              isi_materi TEXT,
+              lampiran TEXT,
+              outcomes TEXT,
+              status VARCHAR(50) DEFAULT 'draft',
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+
+          await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS assignments (
+              id SERIAL PRIMARY KEY,
+              material_id INT NOT NULL,
+              deskripsi_tugas TEXT,
+              tenggat TIMESTAMP,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+
+          await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS submissions (
+              id SERIAL PRIMARY KEY,
+              assignment_id INT NOT NULL,
+              siswa_id INT NOT NULL,
+              file_url TEXT,
+              file_name VARCHAR(500),
+              catatan TEXT,
+              submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+              nilai INT NULL
+            );
+            ALTER TABLE submissions ADD COLUMN IF NOT EXISTS file_name VARCHAR(500);
+            ALTER TABLE submissions ADD COLUMN IF NOT EXISTS catatan TEXT;
+          `);
+
+          await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS questions (
+              id SERIAL PRIMARY KEY,
+              gadik_id INT NOT NULL,
+              soal TEXT NOT NULL,
+              unit_spesialisasi VARCHAR(50) NOT NULL,
+              tingkat_kesulitan VARCHAR(50) DEFAULT 'sedang',
+              poin INT DEFAULT 10,
+              opsi_jawaban TEXT,
+              jawaban_benar INT,
+              tingkat_kegagalan DECIMAL(5,2) DEFAULT 0,
+              status VARCHAR(50) DEFAULT 'pending',
+              approved_by INT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+
+          try {
+            await pgPool.query(`ALTER TABLE questions ADD COLUMN IF NOT EXISTS poin INT DEFAULT 10;`);
+          } catch (e) {}
+
+          await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS exam_sessions (
+              id SERIAL PRIMARY KEY,
+              gadik_id INT NOT NULL,
+              judul VARCHAR(500) NOT NULL,
+              question_set_id INT,
+              durasi_menit INT DEFAULT 60,
+              peserta TEXT,
+              status VARCHAR(50) DEFAULT 'scheduled',
+              scheduled_at TIMESTAMP,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+
+          await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS rankings (
+              id SERIAL PRIMARY KEY,
+              siswa_id INT NOT NULL,
+              total_points INT DEFAULT 0,
+              simulation_points INT DEFAULT 0,
+              quiz_points INT DEFAULT 0,
+              exam_points INT DEFAULT 0,
+              updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+
+          await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS certifications (
+              id SERIAL PRIMARY KEY,
+              siswa_id INT NOT NULL,
+              gadik_id INT,
+              unit_spesialisasi VARCHAR(50),
+              syarat_terpenuhi INT DEFAULT 0,
+              total_syarat INT DEFAULT 5,
+              status VARCHAR(50) DEFAULT 'pending',
+              cert_number VARCHAR(100),
+              cert_url TEXT,
+              issued_at TIMESTAMP NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+
+          // Run safe column migrations
+          await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS nrp VARCHAR(100);`);
+          await pgPool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS jabatan VARCHAR(255);`);
+          await pgPool.query(`ALTER TABLE certifications ADD COLUMN IF NOT EXISTS cert_number VARCHAR(100);`);
+          await pgPool.query(`ALTER TABLE certifications ADD COLUMN IF NOT EXISTS cert_url TEXT;`);
+          await pgPool.query(`
+            CREATE TABLE IF NOT EXISTS cert_templates (
+              id SERIAL PRIMARY KEY,
+              template_url TEXT NOT NULL,
+              positions JSONB NOT NULL,
+              created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            );
+          `);
+
           tablesInitialized = true;
           console.log('✅ Neon PostgreSQL tables initialized and ready');
         } catch (err) {
@@ -134,6 +252,40 @@ if (isPostgres) {
       await ensurePostgresTables();
       const client = await pgPool.connect();
       return {
+        async execute(sql, params = []) {
+          let paramIndex = 1;
+          let pgSql = sql.replace(/\?/g, () => `$${paramIndex++}`);
+          
+          if (/^\s*INSERT\s+INTO/i.test(pgSql) && !/RETURNING/i.test(pgSql)) {
+            pgSql += ' RETURNING id';
+          }
+
+          const res = await client.query(pgSql, params);
+          const rows = res.rows || [];
+          
+          const insertResult = rows;
+          if (rows.length > 0 && rows[0].id !== undefined) {
+            insertResult.insertId = rows[0].id;
+          } else if (res.oid) {
+            insertResult.insertId = res.oid;
+          }
+
+          return [insertResult, res.fields];
+        },
+        async query(sql, params = []) {
+          return this.execute(sql, params);
+        },
+        async beginTransaction() {
+          await client.query('BEGIN');
+        },
+        async commit() {
+          await client.query('COMMIT');
+        },
+        async rollback() {
+          try {
+            await client.query('ROLLBACK');
+          } catch (e) {}
+        },
         release: () => client.release()
       };
     }

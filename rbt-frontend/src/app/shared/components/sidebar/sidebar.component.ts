@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { SidebarService } from '../../../core/services/sidebar.service';
 import { LanguageService } from '../../../core/services/language.service';
+import { AuthService } from '../../../core/services/auth.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -11,52 +12,76 @@ import { LanguageService } from '../../../core/services/language.service';
   template: `
     <aside class="sidebar" id="main-sidebar">
       <nav class="sidebar-nav">
-        <div class="nav-section">
-          <span class="nav-section-label">{{ lang.t('sidebar.menu') }}</span>
-
-          <a routerLink="/dashboard" routerLinkActive="active" class="nav-item" id="nav-dashboard">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7" rx="1"/>
-                <rect x="14" y="3" width="7" height="7" rx="1"/>
-                <rect x="3" y="14" width="7" height="7" rx="1"/>
-                <rect x="14" y="14" width="7" height="7" rx="1"/>
-              </svg>
-            </div>
-            <span class="nav-label">{{ lang.t('sidebar.dashboard') }}</span>
-          </a>
-
-          <a routerLink="/simulation" routerLinkActive="active" class="nav-item" id="nav-simulation">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polygon points="13,2 3,14 12,14 11,22 21,10 12,10"/>
-              </svg>
-            </div>
-            <span class="nav-label">{{ lang.t('sidebar.simulation') }}</span>
-          </a>
-
-          <a routerLink="/history" routerLinkActive="active" class="nav-item" id="nav-history">
-            <div class="nav-icon">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <polyline points="12,6 12,12 16,14"/>
-              </svg>
-            </div>
-            <span class="nav-label">{{ lang.t('sidebar.history') }}</span>
-          </a>
-        </div>
-
-        <div class="nav-section">
-          <span class="nav-section-label">{{ lang.t('sidebar.specializations') }}</span>
-
-          <div class="spec-badges">
-            <span class="spec-badge spec-sabhara">Sabhara</span>
-            <span class="spec-badge spec-reserse">Reserse</span>
-            <span class="spec-badge spec-intel">Intel</span>
-            <span class="spec-badge spec-lantas">Lantas</span>
-            <span class="spec-badge spec-binmas">Binmas</span>
+        <!-- MENU GADIK -->
+        @if (auth.user()?.role === 'gadik') {
+          <div class="nav-section">
+            <span class="nav-section-label">Menu Gadik</span>
+            <a routerLink="/gadik/dashboard" routerLinkActive="active" class="nav-item"><span class="nav-icon">▦</span><span class="nav-label">Dashboard</span></a>
+            <a routerLink="/gadik/materi" routerLinkActive="active" class="nav-item"><span class="nav-icon">✎</span><span class="nav-label">Buat Materi</span></a>
+            <a routerLink="/gadik/tugas" routerLinkActive="active" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Materi & Tugas</span></a>
+            <a routerLink="/gadik/monitor" routerLinkActive="active" class="nav-item"><span class="nav-icon">◎</span><span class="nav-label">Monitor Siswa</span></a>
+            <a routerLink="/gadik/realtime" routerLinkActive="active" class="nav-item"><span class="nav-icon">▲</span><span class="nav-label">Real-time Test</span></a>
+            <a routerLink="/gadik/soal" routerLinkActive="active" class="nav-item"><span class="nav-icon">▤</span><span class="nav-label">Manajemen Soal</span></a>
+            <a routerLink="/gadik/sertifikasi" routerLinkActive="active" class="nav-item"><span class="nav-icon">◆</span><span class="nav-label">Sertifikasi</span></a>
           </div>
-        </div>
+        }
+
+        <!-- MENU SISWA -->
+        @if (auth.user()?.role === 'siswa') {
+          <div class="nav-section">
+            <span class="nav-section-label">Menu Siswa</span>
+            <a routerLink="/siswa/dashboard" routerLinkActive="active" class="nav-item"><span class="nav-icon">▦</span><span class="nav-label">Dashboard</span></a>
+            <a routerLink="/siswa/simulasi" routerLinkActive="active" class="nav-item"><span class="nav-icon">⚡</span><span class="nav-label">Simulasi RBT</span></a>
+            <a routerLink="/siswa/tugas" routerLinkActive="active" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Materi & Tugas</span></a>
+            <a routerLink="/siswa/latihan" routerLinkActive="active" class="nav-item"><span class="nav-icon">✎</span><span class="nav-label">Latihan Soal OBE</span></a>
+            <a routerLink="/siswa/ranking" routerLinkActive="active" class="nav-item"><span class="nav-icon">◈</span><span class="nav-label">Sistem Ranking</span></a>
+            <a routerLink="/siswa/sertifikasi" routerLinkActive="active" class="nav-item"><span class="nav-icon">◆</span><span class="nav-label">Sertifikasi</span></a>
+          </div>
+        }
+
+        <!-- MENU MANAJEMEN -->
+        @if (auth.user()?.role === 'manajemen') {
+          <div class="nav-section">
+            <span class="nav-section-label">Menu Utama Manajemen</span>
+            <a routerLink="/mnj/dashboard" routerLinkActive="active" class="nav-item"><span class="nav-icon">▦</span><span class="nav-label">Dashboard Admin</span></a>
+            <a routerLink="/mnj/akun" routerLinkActive="active" class="nav-item"><span class="nav-icon">◉</span><span class="nav-label">Manajemen Akun</span></a>
+            <a routerLink="/mnj/api" routerLinkActive="active" class="nav-item"><span class="nav-icon">⚙</span><span class="nav-label">Pengaturan API</span></a>
+          </div>
+
+          <div class="nav-section">
+            <span class="nav-section-label">Akses Menu Gadik</span>
+            <a routerLink="/gadik/dashboard" routerLinkActive="active" class="nav-item"><span class="nav-icon">▦</span><span class="nav-label">Dashboard Gadik</span></a>
+            <a routerLink="/gadik/materi" routerLinkActive="active" class="nav-item"><span class="nav-icon">✎</span><span class="nav-label">Buat Materi & Soal</span></a>
+            <a routerLink="/gadik/tugas" routerLinkActive="active" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Materi & Tugas</span></a>
+            <a routerLink="/gadik/monitor" routerLinkActive="active" class="nav-item"><span class="nav-icon">◎</span><span class="nav-label">Monitor Siswa</span></a>
+            <a routerLink="/gadik/realtime" routerLinkActive="active" class="nav-item"><span class="nav-icon">▲</span><span class="nav-label">Real-time Test</span></a>
+            <a routerLink="/gadik/soal" routerLinkActive="active" class="nav-item"><span class="nav-icon">▤</span><span class="nav-label">Manajemen Soal</span></a>
+            <a routerLink="/gadik/sertifikasi" routerLinkActive="active" class="nav-item"><span class="nav-icon">◆</span><span class="nav-label">Sertifikasi & Designer</span></a>
+          </div>
+
+          <div class="nav-section">
+            <span class="nav-section-label">Akses Menu Siswa</span>
+            <a routerLink="/siswa/dashboard" routerLinkActive="active" class="nav-item"><span class="nav-icon">▦</span><span class="nav-label">Dashboard Siswa</span></a>
+            <a routerLink="/siswa/simulasi" routerLinkActive="active" class="nav-item"><span class="nav-icon">⚡</span><span class="nav-label">Simulasi RBT</span></a>
+            <a routerLink="/siswa/tugas" routerLinkActive="active" class="nav-item"><span class="nav-icon">📅</span><span class="nav-label">Tugas Siswa</span></a>
+            <a routerLink="/siswa/latihan" routerLinkActive="active" class="nav-item"><span class="nav-icon">✎</span><span class="nav-label">Latihan Soal OBE</span></a>
+            <a routerLink="/siswa/ranking" routerLinkActive="active" class="nav-item"><span class="nav-icon">◈</span><span class="nav-label">Sistem Ranking</span></a>
+            <a routerLink="/siswa/sertifikasi" routerLinkActive="active" class="nav-item"><span class="nav-icon">◆</span><span class="nav-label">Sertifikasi Siswa</span></a>
+          </div>
+        }
+
+        @if (auth.user()?.role === 'gadik') {
+          <div class="nav-section">
+            <span class="nav-section-label">{{ lang.t('sidebar.specializations') }}</span>
+            <div class="spec-badges">
+              <span class="spec-badge spec-sabhara">Sabhara</span>
+              <span class="spec-badge spec-reserse">Reserse</span>
+              <span class="spec-badge spec-intel">Intel</span>
+              <span class="spec-badge spec-lantas">Lantas</span>
+              <span class="spec-badge spec-binmas">Binmas</span>
+            </div>
+          </div>
+        }
       </nav>
 
       <div class="sidebar-footer">
@@ -306,6 +331,7 @@ import { LanguageService } from '../../../core/services/language.service';
 export class SidebarComponent {
   constructor(
     public sidebar: SidebarService,
-    public lang: LanguageService
+    public lang: LanguageService,
+    public auth: AuthService
   ) {}
 }

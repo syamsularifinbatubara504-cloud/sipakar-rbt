@@ -4,10 +4,12 @@ import { AuthService } from '../../../core/services/auth.service';
 import { LanguageService } from '../../../core/services/language.service';
 import { LoadingSpinnerComponent } from '../../../shared/components/loading-spinner/loading-spinner.component';
 
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [CommonModule, LoadingSpinnerComponent],
+  imports: [CommonModule, LoadingSpinnerComponent, FormsModule],
   template: `
     <div class="login-page" id="login-page">
       <!-- Top-right corner language switcher -->
@@ -74,24 +76,36 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
             <p class="dev-error" style="margin-bottom: 1rem;">{{ auth.loginError() }}</p>
           }
 
-          <!-- Dev Login Button (hanya untuk development/testing) -->
-          <div class="dev-login-section">
+          <!-- Local Login Form (untuk predefined accounts) -->
+          <div class="local-login-section">
             <div class="dev-divider">
-              <span>{{ lang.t('login.card.dev_divider') }}</span>
+              <span>Atau Login Menggunakan Akun SPN</span>
             </div>
-            <button
-              class="btn-dev-login"
-              (click)="devLogin()"
-              [disabled]="auth.loading() || devLoading()"
-              id="btn-dev-login"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
-                <line x1="8" y1="21" x2="16" y2="21"/>
-                <line x1="12" y1="17" x2="12" y2="21"/>
-              </svg>
-              {{ lang.t('login.card.dev_btn') }}
-            </button>
+            <form (ngSubmit)="localLogin()" #localForm="ngForm" class="local-form">
+              <input 
+                type="email" 
+                name="email" 
+                [(ngModel)]="email" 
+                placeholder="Email Akun SPN" 
+                class="form-input"
+                required
+              >
+              <input 
+                type="password" 
+                name="password" 
+                [(ngModel)]="password" 
+                placeholder="Password" 
+                class="form-input"
+                required
+              >
+              <button
+                type="submit"
+                class="btn-dev-login"
+                [disabled]="auth.loading() || devLoading() || !localForm.form.valid"
+              >
+                Login Akun SPN
+              </button>
+            </form>
             @if (devError()) {
               <p class="dev-error">{{ devError() }}</p>
             }
@@ -405,6 +419,31 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
       cursor: not-allowed;
     }
 
+    .local-form {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-sm);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-sm);
+      color: var(--color-text-primary);
+      font-size: 0.875rem;
+      font-family: var(--font-body);
+      transition: all var(--transition-fast);
+    }
+
+    .form-input:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      background: rgba(255, 255, 255, 0.08);
+      box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+
     .dev-error {
       margin-top: var(--spacing-sm);
       font-size: 0.75rem;
@@ -446,7 +485,9 @@ import { LoadingSpinnerComponent } from '../../../shared/components/loading-spin
 export class LoginComponent implements AfterViewInit {
   @ViewChild('googleBtn') googleBtn!: ElementRef;
 
-  // State untuk dev login
+  // State untuk local login
+  email = '';
+  password = '';
   devLoading = signal(false);
   devError = signal('');
 
@@ -464,14 +505,16 @@ export class LoginComponent implements AfterViewInit {
     }, 500);
   }
 
-  /** Masuk menggunakan endpoint dev-login (tanpa Google OAuth) */
-  async devLogin(): Promise<void> {
+  /** Masuk menggunakan endpoint local-login (Email/Password) */
+  async localLogin(): Promise<void> {
+    if (!this.email || !this.password) return;
+    
     this.devLoading.set(true);
     this.devError.set('');
     try {
-      await this.auth.devLogin();
+      await this.auth.localLogin(this.email, this.password);
     } catch (err: any) {
-      this.devError.set(err?.message || 'Dev login gagal. Pastikan backend berjalan.');
+      this.devError.set(err?.message || 'Login gagal. Pastikan email dan password benar.');
     } finally {
       this.devLoading.set(false);
     }
