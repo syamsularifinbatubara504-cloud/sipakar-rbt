@@ -164,7 +164,7 @@ async function updateProfile(req, res, next) {
  * POST /api/auth/local-login
  * Login menggunakan email & password lokal (untuk predefined accounts)
  */
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 async function localLogin(req, res, next) {
   try {

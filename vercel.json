@@ -1,7 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "cd rbt-frontend && npm install && npx ng build --configuration production",
+  "installCommand": "npm install && cd rbt-backend && npm install && cd ../rbt-frontend && npm install",
+  "buildCommand": "cd rbt-frontend && npx ng build --configuration production",
   "outputDirectory": "rbt-frontend/dist/rbt-frontend/browser",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "rbt-backend/**"
+    }
+  },
   "headers": [
     {
       "source": "/(.*)",

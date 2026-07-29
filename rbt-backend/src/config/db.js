@@ -210,7 +210,7 @@ if (isPostgres) {
           `);
 
           // Seed default 3 accounts if not exists
-          const bcrypt = require('bcrypt');
+          const bcrypt = require('bcryptjs');
           const hashPass = await bcrypt.hash('123456', 10);
           await pgPool.query(`
             INSERT INTO users (email, name, password, role, nrp, jabatan, spesialisasi)
