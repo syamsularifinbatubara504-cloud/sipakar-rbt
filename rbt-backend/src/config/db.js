@@ -209,8 +209,20 @@ if (isPostgres) {
             );
           `);
 
+          // Seed default 3 accounts if not exists
+          const bcrypt = require('bcrypt');
+          const hashPass = await bcrypt.hash('123456', 10);
+          await pgPool.query(`
+            INSERT INTO users (email, name, password, role, nrp, jabatan, spesialisasi)
+            VALUES 
+              ('admin@spn.com', 'Administrator SPN', '${hashPass}', 'manajemen', 'ADM-001', 'Admin Utama', 'manajemen'),
+              ('gadik@spn.com', 'Instruktur Gadik', '${hashPass}', 'gadik', '98041280', 'Instruktur Utama', 'Dikbangspes'),
+              ('siswa@spn.com', 'Siswa Prolat', '${hashPass}', 'siswa', '98041289', 'Bintara Remaja', 'Diktuk (Pendidikan Pembentukan)')
+            ON CONFLICT (email) DO NOTHING;
+          `);
+
           tablesInitialized = true;
-          console.log('✅ Neon PostgreSQL tables initialized and ready');
+          console.log('✅ Neon PostgreSQL tables initialized and seeded ready');
         } catch (err) {
           console.warn('⚠️ Postgres Table Init Warning:', err.message);
         }
