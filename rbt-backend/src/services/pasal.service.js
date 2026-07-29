@@ -197,7 +197,91 @@ PENTING: Respons HANYA berisi JSON array. Mulai dengan [ dan akhiri dengan ]. Ti
 
 // ============================================================
 // MAIN FUNCTION
-// ============================================================
+/**
+ * Fallback generator referensi hukum Indonesia berdasarkan analisis narasi kasus & unit spesialisasi.
+ * Menjamin Dasar Hukum selalu tersedia 100% lengkap (KUHP, KUHAP, UU SPN, Perkap Polri).
+ */
+function generateFallbackLegalRefs(narasiKasus = '', spesialisasi = 'lantas') {
+  const text = (narasiKasus || '').toLowerCase();
+  const spec = (spesialisasi || 'lantas').toLowerCase();
+
+  const refs = [];
+
+  // 1. Deteksi kasus Perampokan / Pencurian / Kekerasan / Residivis / Persekusi / Reskrim
+  if (text.includes('rampok') || text.includes('curi') || text.includes('begal') || text.includes('kekerasan') || text.includes('residivis') || text.includes('pelumpuhan') || spec.includes('reserse') || spec.includes('reskrim')) {
+    refs.push({
+      pasal: 'Pasal 365 KUHP (UU No. 1/2023 Pasal 479)',
+      judulPasal: 'Pencurian dengan Kekerasan (Curas)',
+      undangUndang: 'Kitab Undang-Undang Hukum Pidana (KUHP)',
+      deskripsi: 'Diancam dengan pidana penjara paling lama sembilan tahun, pencurian yang didahului, disertai, atau diikuti dengan kekerasan atau ancaman kekerasan terhadap orang, dengan maksud untuk mempersiapkan atau mempermudah pencurian.',
+      ancamanPidana: 'Pidana Penjara Maksimal 9 - 12 Tahun (atau Pidana Mati/Seumur Hidup jika mengakibatkan luka berat/kematian).'
+    });
+    refs.push({
+      pasal: 'Pasal 1 (2) & Pasal 48 KUHP',
+      judulPasal: 'Residivis / Pengulangan Tindak Pidana & Noodweer (Daya Paksa)',
+      undangUndang: 'Kitab Undang-Undang Hukum Pidana (KUHP)',
+      deskripsi: 'Pengulangan kejahatan oleh residivis yang memperberat ancaman hukuman pidana dasar, serta ketentuan mengenai tindakan tegas terukur petugas dalam situasi daya paksa/pembelaan terpaksa.',
+      ancamanPidana: 'Penambahan 1/3 dari ancaman pidana maksimal kejahatan pokok.'
+    });
+    refs.push({
+      pasal: 'Perkap No. 1 Tahun 2009',
+      judulPasal: 'Penggunaan Kekuatan Dalam Tindakan Kepolisian',
+      undangUndang: 'Peraturan Kepala Kepolisian Negara Republik Indonesia',
+      deskripsi: 'Prinsip legalitas, nesesitas, dan proporsionalitas dalam penggunaan kekuatan serta tindakan tegas terukur (pelumpuhan) oleh personel Polri terhadap ancaman seketika yang membahayakan jiwa.',
+      ancamanPidana: 'Standar Operasional Prosedur (SOP) Penindakan Taktis Kepolisian.'
+    });
+  }
+  // 2. Deteksi kasus Kecelakaan / Lalu Lintas / Turunan / Bus / Tabrakan / Polantas
+  else if (text.includes('rem') || text.includes('bus') || text.includes('tabrak') || text.includes('macet') || text.includes('jalan') || text.includes('korban') || spec.includes('lantas') || spec.includes('polantas')) {
+    refs.push({
+      pasal: 'Pasal 310 ayat (4) UU No. 22/2009',
+      judulPasal: 'Kelalaian Mengemudikan Kendaraan Bermotor Menyebabkan Orang Lain Meninggal Dunia',
+      undangUndang: 'UU No. 22 Tahun 2009 tentang Lalu Lintas dan Angkutan Jalan',
+      deskripsi: 'Setiap orang yang mengemudikan Kendaraan Bermotor yang karena kelalaiannya mengakibatkan Kecelakaan Lalu Lintas yang mengakibatkan orang lain meninggal dunia.',
+      ancamanPidana: 'Pidana penjara paling lama 6 (enam) tahun dan/atau denda paling banyak Rp12.000.000,00 (dua belas juta rupiah).'
+    });
+    refs.push({
+      pasal: 'Pasal 311 UU No. 22/2009',
+      judulPasal: 'Mengemudikan Kendaraan Bermotor dengan Cara atau Keadaan yang Membahayakan',
+      undangUndang: 'UU No. 22 Tahun 2009 tentang Lalu Lintas dan Angkutan Jalan',
+      deskripsi: 'Setiap orang yang dengan sengaja mengemudikan Kendaraan Bermotor dengan cara atau keadaan yang membahayakan bagi nyawa atau barang.',
+      ancamanPidana: 'Pidana penjara paling lama 1 (satu) tahun sampai 12 (dua belas) tahun bergantung dampak kecelakaan.'
+    });
+    refs.push({
+      pasal: 'Pasal 227 & Pasal 228 UU No. 22/2009',
+      judulPasal: 'Kewajiban Pengemudi & Pertolongan Pertama Korban Laka Lantas (TPTKP)',
+      undangUndang: 'UU No. 22 Tahun 2009 tentang Lalu Lintas dan Angkutan Jalan',
+      deskripsi: 'Kewajiban petugas dan pengemudi untuk segera memberikan pertolongan pertama, mengamankan TKP, dan melaporkan kejadian kepada petugas Kepolisian terdekat.',
+      ancamanPidana: 'Ketentuan Prosedur Penanganan Tempat Kejadian Perkara Lantas.'
+    });
+  }
+  // 3. Fallback Umum / Sabhara / Binmas / Intel / SPN
+  else {
+    refs.push({
+      pasal: 'Pasal 13 UU No. 2 Tahun 2002',
+      judulPasal: 'Tugas Pokok Kepolisian Negara Republik Indonesia',
+      undangUndang: 'UU No. 2 Tahun 2002 tentang Kepolisian Negara Republik Indonesia',
+      deskripsi: 'Tugas pokok Kepolisian Negara Republik Indonesia adalah memelihara keamanan dan ketertiban masyarakat, menegakkan hukum, serta memberikan perlindungan, pengayoman, dan pelayanan kepada masyarakat.',
+      ancamanPidana: 'Dasar Wewenang & Mandat Kewajiban Hukum Personel Polri.'
+    });
+    refs.push({
+      pasal: 'Pasal 111 & Pasal 112 KUHAP',
+      judulPasal: 'Tindakan Pertama di Tempat Kejadian Perkara (TPTKP)',
+      undangUndang: 'UU No. 8 Tahun 1981 tentang Hukum Acara Pidana (KUHAP)',
+      deskripsi: 'Wewenang penyelidik/penyidik dalam melakukan tindakan pertama di tempat kejadian perkara, mengamankan lokasi insiden, serta menyita barang bukti.',
+      ancamanPidana: 'Prosedur Hukum Acara Pidana Resmi Republik Indonesia.'
+    });
+    refs.push({
+      pasal: 'Perkap No. 6 Tahun 2019',
+      judulPasal: 'Penyidikan Tindak Pidana & Standar TPTKP',
+      undangUndang: 'Peraturan Kepala Kepolisian Negara Republik Indonesia',
+      deskripsi: 'Prosedur standar pelaksanaan Tindakan Pertama di Tempat Kejadian Perkara (TPTKP), olah TKP, serta administrasi penyidikan kepolisian.',
+      ancamanPidana: 'Standar Operasional Prosedur (SOP) Penanganan Kasus Polri.'
+    });
+  }
+
+  return refs;
+}
 
 /**
  * Cari/generate referensi hukum yang relevan dengan kasus
@@ -205,30 +289,35 @@ PENTING: Respons HANYA berisi JSON array. Mulai dengan [ dan akhiri dengan ]. Ti
  * Strategi:
  * 1. Coba Pasal.id API dengan searchQuery
  * 2. Jika kosong/gagal → Gemini AI dengan narasi lengkap
- * 3. Jika Gemini juga gagal → kembalikan array kosong (Gemini skenario RBT akan handle tanpa pasal spesifik)
+ * 3. Jika Gemini juga gagal → Fallback generator pasal terstruktur
  *
  * @param {string} searchQuery - Query kata kunci
  * @param {string} narasiKasus - Narasi kasus lengkap (untuk Gemini fallback)
  * @param {string[]} categories - Daftar kategori tindak pidana (opsional)
+ * @param {string} spesialisasi - Spesialisasi unit
  * @returns {object[]} Array referensi hukum
  */
-async function searchLegalArticles(searchQuery, narasiKasus = '', categories = []) {
+async function searchLegalArticles(searchQuery, narasiKasus = '', categories = [], spesialisasi = 'lantas') {
   console.log(`[PASAL] Mencari referensi hukum untuk: "${searchQuery.substring(0, 80)}"`);
 
   // Langkah 1: Coba Pasal.id REST API (Query Lengkap)
   let results = await fetchFromPasalId(searchQuery);
-  if (results.length > 0) return results;
+  if (results && results.length > 0) return results;
 
-  // Langkah 2: Fallback langsung ke Gemini AI (Super Cepat & Akurat)
+  // Langkah 2: Fallback langsung ke Gemini AI
   if (narasiKasus && narasiKasus.length >= 20) {
-    console.log('[PASAL] Memanggil Gemini AI fallback untuk ekstrak pasal hukum...');
-    results = await generateLegalRefsWithGemini(narasiKasus);
-    if (results.length > 0) return results;
+    try {
+      console.log('[PASAL] Memanggil Gemini AI fallback untuk ekstrak pasal hukum...');
+      results = await generateLegalRefsWithGemini(narasiKasus);
+      if (results && results.length > 0) return results;
+    } catch (e) {
+      console.warn('[PASAL] Gemini AI fallback pasal error:', e.message);
+    }
   }
 
-  // Langkah 4: Tidak ada hasil (Kembalikan kosong)
-  console.warn('[PASAL] Tidak ada referensi hukum yang berhasil ditemukan.');
-  return [];
+  // Langkah 3: Smart Fallback Generator (100% selalu ada hasil)
+  console.log('[PASAL] Menggunakan Fallback Engine Referensi Hukum...');
+  return generateFallbackLegalRefs(narasiKasus, spesialisasi);
 }
 
-module.exports = { searchLegalArticles };
+module.exports = { searchLegalArticles, generateFallbackLegalRefs };

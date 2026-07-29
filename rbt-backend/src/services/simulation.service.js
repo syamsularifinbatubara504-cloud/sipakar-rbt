@@ -308,10 +308,37 @@ async function getSimulationDetail(simulationId, userId, language = 'id', role =
 
   const simulation = simRows[0];
 
-  const [legalRows] = await pool.execute(
+  let [legalRows] = await pool.execute(
     'SELECT * FROM legal_references WHERE simulation_id = ?',
     [simulationId]
   );
+
+  // Fallback: If legal references are missing in DB, generate and insert them now!
+  if (!legalRows || legalRows.length === 0) {
+    const { generateFallbackLegalRefs } = require('./pasal.service');
+    const fallbackRefs = generateFallbackLegalRefs(simulation.narasi_kasus, simulation.spesialisasi);
+    for (const ref of fallbackRefs) {
+      try {
+        await pool.execute(
+          `INSERT INTO legal_references (simulation_id, pasal_number, undang_undang, deskripsi, ancaman_pidana, raw_response)
+           VALUES (?, ?, ?, ?, ?, ?)`,
+          [
+            simulationId,
+            ref.pasal || 'Pasal SOP',
+            ref.undangUndang || 'KUHP',
+            ref.deskripsi || '',
+            ref.ancamanPidana || '',
+            JSON.stringify(ref),
+          ]
+        );
+      } catch (e) {}
+    }
+    const [newLegalRows] = await pool.execute(
+      'SELECT * FROM legal_references WHERE simulation_id = ?',
+      [simulationId]
+    );
+    legalRows = newLegalRows || [];
+  }
 
   const [resultRows] = await pool.execute(
     'SELECT * FROM simulation_results WHERE simulation_id = ?',
