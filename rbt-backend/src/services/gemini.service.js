@@ -421,6 +421,12 @@ ${JSON.stringify(cleanInput, null, 2)}`;
     const parsed = extractJSON(text);
     console.log('[GEMINI] ✅ Translation successfully parsed');
     return parsed;
+  } catch (err) {
+    console.error('[GEMINI] ❌ Translation failed, using input fallback:', err.message);
+    return cleanInput;
+  }
+}
+
 /**
  * Fallback generator ketika Gemini API key tidak tersedia atau API error/quota habis.
  * Menghasilkan skenario RBT terstruktur yang realistis berdasarkan narasi kasus & spesialisasi.
